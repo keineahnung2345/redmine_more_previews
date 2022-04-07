@@ -33,12 +33,38 @@ class Libre < RedmineMorePreviews::Conversion
     s = run [LIBRE_OFFICE_BIN, "--version"]
     [:text_libre_office_available, s[2] == 0 ]
   end
+
+  def darken(source, fname)
+    # dark background of powerpoint will be white after conversion
+    if source.ends_with? "ppt" or source.ends_with? "pptx"
+      file = File.open(fname)
+      file_data = file.read; nil
+      file.close
+
+      file_data_out = file_data.dup
+      indices = file_data.enum_for(:scan, /color:#[0-9a-f]+/).map do
+        id = Regexp.last_match.offset(0).first+7
+        red = file_data[id...id+2].to_i(16)
+        green = file_data[id+2...id+4].to_i(16)
+        blue = file_data[id+4...id+6].to_i(16)
+        if red > 127 and green > 127 and blue > 127
+          file_data_out[id...id+6] = (red/2).to_s(16).rjust(2, "0") + (green/2).to_s(16).rjust(2, "0") + (blue/2).to_s(16).rjust(2, "0")
+        end
+      end
+
+      File.open(fname, "w") {
+        |f| f.write file_data_out
+      }
+    end
+  end
   
   def convert
   
     Dir.mktmpdir do |tdir| 
     user_installation = File.join(tdir, "user_installation")
-    command(cd + join + soffice( source, user_installation ) + join + move(thisdir(outfile)) )
+    command(cd + join + soffice( source, user_installation ))
+    darken(source, cd.split(' ')[1][1...-1] + thisdir(outfile)[1...])
+    command(cd + join + move(thisdir(outfile)))
     end
     
   end #def
