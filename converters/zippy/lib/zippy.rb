@@ -119,9 +119,15 @@ class Zippy < RedmineMorePreviews::Conversion
   # tarlink
   #---------------------------------------------------------------------------------------
   def tarlink( entry, asset=nil )
-    path   = url_helpers.more_preview_path(request.params.symbolize_keys.merge(:asset => URI.encode_www_form_component(entry.name)))
-    link_to File.basename(RmpText.to_utf8(entry.full_name)), path, :download => File.basename(RmpText.to_utf8(entry.full_name))
-  end #def
+    path   = URI.parse(request.fullpath).path
+    params = request.query_parameters.to_h.symbolize_keys
+    uri    = [path, params.
+                      merge(:asset => URI.encode_www_form_component(entry.full_name)).
+                      compact.
+                      map{|k,v| "#{k}=#{v}"}.join("&")
+             ].select(&:present?).join("?")
+    link_to File.basename(RmpText.to_utf8(entry.full_name)), uri, :download => File.basename(RmpText.to_utf8(entry.full_name))
+  end
   
   #---------------------------------------------------------------------------------------
   # tarcontent
@@ -195,9 +201,15 @@ class Zippy < RedmineMorePreviews::Conversion
   # ziplink
   #---------------------------------------------------------------------------------------
   def ziplink( entry, asset=nil )
-    path   = url_helpers.more_preview_path(request.params.symbolize_keys.merge(:asset => URI.encode_www_form_component(entry.name)))
-    link_to File.basename(RmpText.to_utf8(entry.name)), path, :download => File.basename(RmpText.to_utf8(entry.name))
-  end #def
+    path   = URI.parse(request.fullpath).path
+    params = request.query_parameters.to_h.symbolize_keys
+    uri    = [path, params.
+                      merge(:asset => URI.encode_www_form_component(entry.name)).
+                      compact.
+                      map{|k,v| "#{k}=#{v}"}.join("&")
+             ].select(&:present?).join("?")
+    link_to File.basename(RmpText.to_utf8(entry.name)), uri, :download => File.basename(RmpText.to_utf8(entry.name))
+  end
   
   #---------------------------------------------------------------------------------------
   # zipasset
